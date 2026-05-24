@@ -1,0 +1,41 @@
+services:
+  ray-head:
+    build: .
+    command: >
+      python -m ray start
+      --head
+      --port=6379
+      --dashboard-host=0.0.0.0
+      --dashboard-port=8265
+      --block
+    ports:
+      - "6379:6379"
+      - "8265:8265"
+    volumes:
+      - .:/app
+
+  ray-worker:
+    build: .
+    command: >
+      python -m ray start
+      --address=ray-head:6379
+      --block
+    depends_on:
+      - ray-head
+    volumes:
+      - .:/app
+
+  pipeline:
+    build: .
+    command: >
+      atus-pipeline
+      --engine ray
+      --ray-address ray-head:6379
+      --years 1997-2024
+      --write-parquet
+    depends_on:
+      - ray-head
+      - ray-worker
+    volumes:
+      - .:/app
+

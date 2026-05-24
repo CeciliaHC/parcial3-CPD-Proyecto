@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Local data from INEGI and generated outputs
+conjunto_de_datos_atus_anual_csv/
+data/
+outputs/
+*.parquet
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+

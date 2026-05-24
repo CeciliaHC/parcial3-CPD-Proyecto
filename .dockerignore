@@ -1,0 +1,10 @@
+conjunto_de_datos_atus_anual_csv/
+data/
+outputs/
+.git/
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+

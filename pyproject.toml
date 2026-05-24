@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "atus-ray-pipeline"
+version = "0.1.0"
+description = "Pipeline distribuido con Python, Pandas y Ray para limpiar datos ATUS de INEGI."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "pandas>=2.2",
+  "ray[data]>=2.20",
+  "pyarrow>=15.0"
+]
+
+[project.optional-dependencies]
+dashboard = ["streamlit>=1.35"]
+dev = ["pytest>=8.0", "ruff>=0.5"]
+
+[project.scripts]
+atus-pipeline = "atus_pipeline.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+

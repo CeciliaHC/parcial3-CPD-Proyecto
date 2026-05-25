@@ -86,7 +86,7 @@ Este comando permite validar instalacion, lectura de datos, limpieza y generacio
 
 ## Ejecucion distribuida local con Ray
 
-Procesar todos los anios disponibles usando Ray:
+Procesar todos los años disponibles usando Ray:
 
 ```powershell
 atus-pipeline --engine ray --years 1997-2024 --write-parquet

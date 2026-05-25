@@ -35,6 +35,8 @@ Las carpetas `conjunto_de_datos_atus_anual_csv/` y `data/` estan ignoradas por G
 
 ## Datos de entrada
 
+Antes de ejecutar el pipeline es necesario tener descargada la carpeta `conjunto_de_datos_atus_anual_csv/` en la raiz del proyecto. Esta carpeta contiene los CSV anuales de ATUS, catalogos, metadatos y diccionario de datos.
+
 El pipeline espera la descarga anual de ATUS con esta estructura:
 
 ```text

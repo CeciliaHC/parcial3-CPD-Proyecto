@@ -78,13 +78,15 @@ py -3.12 -m venv .venv
 
 ## Ejecucion rapida
 
-Procesar una muestra pequena del anio 2024:
+Procesar una muestra pequena del año 2024:
 
 ```powershell
 atus-pipeline --engine local --years 2024 --max-rows-per-file 10000
 ```
 
 Este comando permite validar instalacion, lectura de datos, limpieza y generacion de salidas sin procesar todo el conjunto historico.
+
+Por defecto, cada ejecucion regenera las carpetas `clean_csv/`, `clean_parquet/` y `summary/` dentro de `data/processed/`. Esto evita duplicados cuando se vuelve a correr el pipeline despues de una prueba o una ejecucion interrumpida. Para conservar salidas existentes y agregar nuevas particiones, usar `--append-output`.
 
 ## Ejecucion distribuida local con Ray
 

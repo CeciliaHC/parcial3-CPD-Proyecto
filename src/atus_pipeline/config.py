@@ -61,7 +61,7 @@ COLUMN_RENAMES = {
     "COBERTURA": "cobertura",
     "ID_ENTIDAD": "id_entidad",
     "ID_MUNICIPIO": "id_municipio",
-    "ANIO": "anio",
+    "ANIO": "año",
     "MES": "mes",
     "ID_HORA": "hora",
     "ID_MINUTO": "minuto",
@@ -140,7 +140,7 @@ INJURY_COLUMNS = [
 ]
 
 NUMERIC_COLUMNS = [
-    "anio",
+    "año",
     "mes",
     "hora",
     "minuto",
@@ -152,7 +152,7 @@ NUMERIC_COLUMNS = [
 ]
 
 OUTPUT_COLUMNS = [
-    "anio",
+    "año",
     "mes",
     "dia",
     "fecha",
@@ -226,4 +226,4 @@ class PipelineOptions:
     write_csv: bool
     write_parquet: bool
     ray_address: str | None
-
+    append_output: bool

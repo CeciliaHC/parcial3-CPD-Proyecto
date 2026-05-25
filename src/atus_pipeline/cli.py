@@ -41,7 +41,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--years",
         nargs="*",
-        help="Anios a procesar. Acepta valores como 2024 o rangos como 2022-2024.",
+        help="Años a procesar. Acepta valores como 2024 o rangos como 2022-2024.",
     )
     parser.add_argument(
         "--engine",
@@ -76,6 +76,14 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Direccion de Ray Cluster. Usa 'auto' al correr contra un head node.",
     )
+    parser.add_argument(
+        "--append-output",
+        action="store_true",
+        help=(
+            "Conservar salidas existentes y agregar nuevas particiones. "
+            "Por defecto se regeneran clean_csv, clean_parquet y summary."
+        ),
+    )
     return parser
 
 
@@ -91,6 +99,7 @@ def main(argv: list[str] | None = None) -> int:
         write_csv=not args.no_csv,
         write_parquet=args.write_parquet,
         ray_address=args.ray_address,
+        append_output=args.append_output,
     )
     result = run_pipeline(options)
     print("Pipeline terminado")
@@ -103,4 +112,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

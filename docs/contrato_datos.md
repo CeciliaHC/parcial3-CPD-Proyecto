@@ -2,15 +2,15 @@
 
 Los archivos limpios se escriben en:
 
-`data/processed/clean_csv/<worker_node>/atus_clean_<anio>_<worker_node>.csv`
+`data/processed/clean_csv/<worker_node>/atus_clean_<año>_<worker_node>.csv`
 
 Si se activa Parquet:
 
-`data/processed/clean_parquet/<worker_node>/atus_clean_<anio>_<worker_node>_part_<n>.parquet`
+`data/processed/clean_parquet/<worker_node>/atus_clean_<año>_<worker_node>_part_<n>.parquet`
 
 ## Columnas principales
 
-- `anio`, `mes`, `dia`, `fecha`: fecha normalizada del accidente. Si INEGI marca dia no especificado, `fecha` queda vacia.
+- `año`, `mes`, `dia`, `fecha`: fecha normalizada del accidente. Si INEGI marca dia no especificado, `fecha` queda vacia.
 - `hora`, `minuto`, `hora_minuto`: hora normalizada. Si INEGI usa 99 como no especificado, queda vacia.
 - `id_entidad`, `entidad`, `id_municipio`, `municipio`, `cve_municipio`: ubicacion enriquecida con catalogos.
 - `zona`: `Urbana`, `Suburbana`, `Certificado cero` o `No especificada`.
@@ -30,7 +30,7 @@ Todos quedan en `data/processed/summary/`.
 - `accidents_by_state.csv`: ranking por entidad federativa.
 - `accidents_by_municipality.csv`: ranking municipal.
 - `accidents_by_hour.csv`: distribucion por hora.
-- `accidents_by_month.csv`: tendencia mensual por anio.
+- `accidents_by_month.csv`: tendencia mensual por año.
 - `accidents_by_cause.csv`: ranking de causas.
 - `accidents_by_type.csv`: ranking por tipo de accidente.
 - `accidents_by_classification.csv`: fatal, no fatal, solo danos, etc.
@@ -47,4 +47,3 @@ Todos quedan en `data/processed/summary/`.
 - `victimas_muertas`: suma de personas fallecidas.
 - `total_victimas`: heridos + muertos.
 - `indice_gravedad`: `(victimas_heridas + victimas_muertas * 5) / accidentes`.
-

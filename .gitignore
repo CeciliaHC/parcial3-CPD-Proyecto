@@ -6,6 +6,7 @@ __pycache__/
 .ruff_cache/
 .venv/
 venv/
+*.egg-info/
 
 # Local data from INEGI and generated outputs
 conjunto_de_datos_atus_anual_csv/

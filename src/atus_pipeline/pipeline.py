@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+import shutil
 from pathlib import Path
 
 from .catalogs import build_state_node_shards, load_catalogs
@@ -39,6 +40,13 @@ def _append_csv(df, path: Path):
 def _write_parquet(df, path: Path):
     path.parent.mkdir(parents=True, exist_ok=True)
     df.to_parquet(path, index=False)
+
+
+def _prepare_output_dir(output_dir: Path):
+    for subdir in ("clean_csv", "clean_parquet", "summary"):
+        target = output_dir / subdir
+        if target.exists():
+            shutil.rmtree(target)
 
 
 def _process_shard(
@@ -144,7 +152,7 @@ def _process_shard(
             {
                 "worker_node": shard_name,
                 "fuente_archivo": file_path.name,
-                "anio": year,
+                "año": year,
                 "rows_read": file_rows_read,
                 "rows_selected_for_node": file_rows_selected,
                 "rows_cleaned": file_rows_cleaned,
@@ -273,6 +281,9 @@ def run_pipeline(options: PipelineOptions) -> dict:
     ]
     file_names = [str(path) for path in files]
 
+    if not options.append_output:
+        _prepare_output_dir(options.output_dir)
+
     if options.engine == "local":
         results = [
             _process_shard(
@@ -319,4 +330,3 @@ def run_pipeline(options: PipelineOptions) -> dict:
         raise ValueError(f"Engine no soportado: {options.engine}")
 
     return _write_head_outputs(results, options, started)
-

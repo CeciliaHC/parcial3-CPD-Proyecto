@@ -25,7 +25,7 @@ Este repositorio implementa la parte de recoleccion distribuida y limpieza descr
    - Escribe particiones limpias y calcula agregados parciales.
 
 4. **Resultados**
-   - `data/processed/clean_csv/`: particiones limpias por nodo y anio.
+   - `data/processed/clean_csv/`: particiones limpias por nodo y año.
    - `data/processed/clean_parquet/`: particiones Parquet si se usa `--write-parquet`.
    - `data/processed/summary/`: archivos listos para analisis y dashboard.
 

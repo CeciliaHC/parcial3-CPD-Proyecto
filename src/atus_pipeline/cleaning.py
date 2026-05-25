@@ -71,16 +71,23 @@ def _derive_zone(df):
 def _derive_date(df):
     import pandas as pd
 
+    valid_year = df["año"].notna()
     valid_day = df["dia"].between(1, 31)
     valid_month = df["mes"].between(1, 12)
-    date_parts = pd.DataFrame(
-        {
-            "year": df["anio"],
-            "month": df["mes"].where(valid_month),
-            "day": df["dia"].where(valid_day),
-        }
+
+    valid_date_parts = valid_year & valid_month & valid_day
+    date_text = pd.Series(pd.NA, index=df.index, dtype="string")
+    date_text.loc[valid_date_parts] = (
+        df.loc[valid_date_parts, "año"].astype("string").str.zfill(4)
+        + "-"
+        + df.loc[valid_date_parts, "mes"].astype("string").str.zfill(2)
+        + "-"
+        + df.loc[valid_date_parts, "dia"].astype("string").str.zfill(2)
     )
-    return pd.to_datetime(date_parts, errors="coerce").dt.strftime("%Y-%m-%d")
+
+    return pd.to_datetime(
+        date_text, format="%Y-%m-%d", errors="coerce"
+    ).dt.strftime("%Y-%m-%d")
 
 
 def clean_dataframe(df, catalogs: dict, source_file: str | None, worker_node: str):
@@ -177,7 +184,7 @@ def aggregate_dataframe(df, group_columns: list[str]):
     grouped = (
         df.groupby(group_columns, dropna=False)
         .agg(
-            accidentes=("anio", "size"),
+            accidentes=("año", "size"),
             accidentes_con_heridos=("hay_heridos", "sum"),
             accidentes_con_muertos=("hay_muertos", "sum"),
             victimas_heridas=("victimas_heridas", "sum"),
@@ -201,12 +208,11 @@ def make_summaries(cleaned):
             df, ["id_entidad", "entidad", "id_municipio", "municipio"]
         ),
         "accidents_by_hour": aggregate_dataframe(df, ["hora"]),
-        "accidents_by_month": aggregate_dataframe(df, ["anio", "mes"]),
+        "accidents_by_month": aggregate_dataframe(df, ["año", "mes"]),
         "accidents_by_cause": aggregate_dataframe(df, ["causa_accidente"]),
         "accidents_by_type": aggregate_dataframe(df, ["tipo_accidente"]),
         "accidents_by_classification": aggregate_dataframe(
             df, ["clasificacion_accidente"]
         ),
-        "annual_trend": aggregate_dataframe(df, ["anio"]),
+        "annual_trend": aggregate_dataframe(df, ["año"]),
     }
-

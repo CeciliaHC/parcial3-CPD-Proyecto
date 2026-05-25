@@ -1,2 +1,0 @@
-[console_scripts]
-atus-pipeline = atus_pipeline.cli:main

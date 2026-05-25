@@ -1,16 +1,16 @@
 param(
-    [string]$Python = "",
+    [string]$Ray = "",
     [Parameter(Mandatory=$true)]
     [string]$HeadAddress
 )
 
-if ([string]::IsNullOrWhiteSpace($Python)) {
-    $venvPython = Join-Path $PSScriptRoot "..\.venv\Scripts\python.exe"
-    if (Test-Path $venvPython) {
-        $Python = (Resolve-Path $venvPython).Path
+if ([string]::IsNullOrWhiteSpace($Ray)) {
+    $venvRay = Join-Path $PSScriptRoot "..\.venv\Scripts\ray.exe"
+    if (Test-Path $venvRay) {
+        $Ray = (Resolve-Path $venvRay).Path
     } else {
-        $Python = "py"
+        $Ray = "ray"
     }
 }
 
-& $Python -m ray start --address=$HeadAddress
+& $Ray start --address=$HeadAddress

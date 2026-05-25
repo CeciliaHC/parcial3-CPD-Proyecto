@@ -2,7 +2,7 @@ services:
   ray-head:
     build: .
     command: >
-      python -m ray start
+      ray start
       --head
       --port=6379
       --dashboard-host=0.0.0.0
@@ -17,7 +17,7 @@ services:
   ray-worker:
     build: .
     command: >
-      python -m ray start
+      ray start
       --address=ray-head:6379
       --block
     depends_on:
@@ -38,4 +38,3 @@ services:
       - ray-worker
     volumes:
       - .:/app
-

@@ -1,0 +1,116 @@
+Metadata-Version: 2.4
+Name: atus-ray-pipeline
+Version: 0.1.0
+Summary: Pipeline distribuido con Python, Pandas y Ray para limpiar datos ATUS de INEGI.
+Requires-Python: <3.13,>=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: pandas>=2.2
+Requires-Dist: ray[data]>=2.20
+Requires-Dist: pyarrow>=15.0
+Provides-Extra: dashboard
+Requires-Dist: streamlit>=1.35; extra == "dashboard"
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0; extra == "dev"
+Requires-Dist: ruff>=0.5; extra == "dev"
+
+# parcial3-CPD-Proyecto
+
+Pipeline distribuido para preparar datos abiertos ATUS de INEGI, siguiendo la arquitectura del proyecto: Python, Pandas, Ray, Ray Cluster y salida CSV/Parquet para analisis estadistico y dashboard.
+
+## Parte implementada
+
+- Recoleccion local de los CSV anuales descargados en `conjunto_de_datos_atus_anual_csv/`.
+- Limpieza y normalizacion por bloques para no cargar los 2.7 GB completos en memoria.
+- Distribucion en 3 nodos Ray segun el diagrama del PDF:
+  - `worker_node_1_a_c`
+  - `worker_node_2_d_m`
+  - `worker_node_3_n_z`
+- Enriquecimiento con catalogos de entidad y municipio.
+- Salidas limpias en CSV y, opcionalmente, Parquet.
+- Resumenes listos para dashboard: entidad, municipio, hora, mes, causa, tipo, clasificacion y tendencia anual.
+- Reportes de calidad y tiempos para comparar Ray contra ejecucion local.
+
+## Instalacion
+
+```powershell
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+pip install -e .
+```
+
+> Importante: no uses Python 3.14 para este proyecto. Ray todavia no publica wheels de Windows para esa version. Usa Python 3.11 o 3.12. Si tienes 3.12, cambia el primer comando a `py -3.12 -m venv .venv`.
+
+## Ejecucion rapida de prueba
+
+Procesa solo una muestra de 2024:
+
+```powershell
+atus-pipeline --engine local --years 2024 --max-rows-per-file 10000
+```
+
+## Ejecucion distribuida local con Ray
+
+```powershell
+atus-pipeline --engine ray --years 1997-2024 --write-parquet
+```
+
+Tambien puedes usar el script:
+
+```powershell
+.\scripts\run_pipeline.ps1 -Engine ray -Years "1997-2024" -WriteParquet
+```
+
+## Salidas
+
+- `data/processed/clean_csv/`: datos limpios particionados por nodo y anio.
+- `data/processed/clean_parquet/`: datos limpios en Parquet si se usa `--write-parquet`.
+- `data/processed/summary/`: agregados para dashboard y reportes.
+
+Para la etapa de analisis/dashboard, las particiones limpias tambien se pueden abrir como Ray Data:
+
+```python
+from atus_pipeline.ray_dataset import load_clean_dataset
+
+ds = load_clean_dataset("data/processed")
+```
+
+Documentacion:
+
+- [Arquitectura](docs/arquitectura.md)
+- [Contrato de datos limpios](docs/contrato_datos.md)
+
+## Ray Cluster
+
+En la maquina head:
+
+```powershell
+.\scripts\start_ray_head.ps1
+```
+
+En cada worker:
+
+```powershell
+.\scripts\start_ray_worker.ps1 -HeadAddress "<ip-head>:6379"
+```
+
+Luego, desde el head:
+
+```powershell
+atus-pipeline --engine ray --ray-address auto --years 1997-2024 --write-parquet
+```
+
+## Docker
+
+Construir la imagen:
+
+```powershell
+docker build -t atus-ray-pipeline .
+```
+
+Levantar Ray head, worker y ejecutar el pipeline:
+
+```powershell
+docker compose -f docker-compose.ray.yml up --build pipeline
+```

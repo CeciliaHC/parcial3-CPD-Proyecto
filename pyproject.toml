@@ -7,7 +7,7 @@ name = "atus-ray-pipeline"
 version = "0.1.0"
 description = "Pipeline distribuido con Python, Pandas y Ray para limpiar datos ATUS de INEGI."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.13"
 dependencies = [
   "pandas>=2.2",
   "ray[data]>=2.20",
@@ -23,4 +23,3 @@ atus-pipeline = "atus_pipeline.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-

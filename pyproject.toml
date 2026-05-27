@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dashboard = ["streamlit>=1.35", "plotly>=5.22", "numpy>=1.26"]
+dashboard = ["streamlit>=1.35", "plotly>=5.22", "numpy>=1.26", "matplotlib>=3.8"]
 dev = ["pytest>=8.0", "ruff>=0.5"]
 
 [project.scripts]

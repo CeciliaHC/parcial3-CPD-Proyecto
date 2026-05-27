@@ -193,19 +193,15 @@ from atus_pipeline.ray_dataset import load_clean_dataset
 
 ds = load_clean_dataset("data/processed")
 ```
+## Ejecucion del dashboard Streamlit
+Ejecuta los siguientes comandos desde la terminal:
 
+```powershell
+pip install streamlit plotly pandas
+streamlit run dashboard.py
+```
 ## Documentacion
 
 - [Arquitectura](docs/arquitectura.md)
 - [Contrato de datos limpios](docs/contrato_datos.md)
 
-## Siguientes pasos
-
-La siguiente etapa del proyecto puede continuar con:
-
-1. Ejecutar el pipeline completo sobre 1997-2024 y validar `data_quality_report.csv`.
-2. Revisar `run_metrics.csv` para comparar tiempo local contra Ray y calcular speedup.
-3. Construir el analisis estadistico a partir de los resumenes en `data/processed/summary/`.
-4. Crear el dashboard en Streamlit usando los agregados CSV y, si se requiere, `load_clean_dataset()`.
-5. Agregar visualizaciones para rankings por entidad, municipio, hora, mes, causa, tipo de accidente y gravedad.
-6. Documentar hallazgos principales y decisiones metodologicas en el reporte tecnico.

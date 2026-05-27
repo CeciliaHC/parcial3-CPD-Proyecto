@@ -4,6 +4,7 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+from pathlib import Path
 
 #Configuración
 st.set_page_config(
@@ -54,6 +55,12 @@ html,body,[class*="css"]{font-family:'Inter',sans-serif;}
 #Carga de datos
 DATA = "data/processed/summary"
 
+def read_optional_summary(file_name):
+    path = Path(DATA) / file_name
+    if path.exists():
+        return pd.read_csv(path)
+    return pd.DataFrame()
+
 @st.cache_data
 def load():
     return {
@@ -67,6 +74,8 @@ def load():
         "trend":   pd.read_csv(f"{DATA}/annual_trend.csv"),
         "quality": pd.read_csv(f"{DATA}/data_quality_report.csv"),
         "metrics": pd.read_csv(f"{DATA}/run_metrics.csv"),
+        "weekday": read_optional_summary("accidents_by_weekday.csv"),
+        "zone":    read_optional_summary("accidents_by_zone.csv"),
     }
 
 d = load()
@@ -355,7 +364,7 @@ elif section == "Distribución Horaria":
     ).reset_index()
     turno_stats["grav"] = (turno_stats["muertos"]/turno_stats["accidentes"]*100).round(2)
 
-    tab1,tab2,tab3 = st.tabs(["Distribución por Hora"," Análisis por Turno","Mapa de Calor"])
+    tab1,tab2,tab3,tab4 = st.tabs(["Distribución por Hora"," Análisis por Turno","Mapa de Calor","Día de Semana"])
 
     with tab1:
         fig = make_subplots(specs=[[{"secondary_y":True}]])
@@ -445,6 +454,49 @@ elif section == "Distribución Horaria":
             title=dict(text="Distribución Radial de Accidentes por Hora",font_size=13,x=0),
         )
         st.plotly_chart(fig4, use_container_width=True)
+
+    with tab4:
+        weekday = d["weekday"].copy()
+        if weekday.empty:
+            st.info("Ejecuta nuevamente el pipeline para generar accidents_by_weekday.csv.")
+        else:
+            weekday_order = {
+                "Lunes": 1,
+                "Martes": 2,
+                "Miércoles": 3,
+                "Jueves": 4,
+                "Viernes": 5,
+                "Sábado": 6,
+                "Domingo": 7,
+            }
+            weekday["orden"] = weekday["dia_semana"].map(weekday_order).fillna(99)
+            weekday = weekday.sort_values("orden")
+            fig5 = make_subplots(specs=[[{"secondary_y": True}]])
+            fig5.add_trace(go.Bar(
+                x=weekday["dia_semana"], y=weekday["accidentes"],
+                name="Accidentes", marker_color="#4b8fff", opacity=.88,
+                hovertemplate="%{x}: %{y:,} accidentes<extra></extra>",
+            ), secondary_y=False)
+            fig5.add_trace(go.Scatter(
+                x=weekday["dia_semana"], y=weekday["indice_gravedad"],
+                name="Índice gravedad", mode="lines+markers",
+                line=dict(color="#ff6b6b", width=2.5), marker_size=9,
+            ), secondary_y=True)
+            fig5.update_layout(**base_layout(height=360, hovermode="x unified",
+                               title=dict(text="Accidentes e Índice de Gravedad por Día", font_size=13, x=0)))
+            fig5.update_yaxes(title_text="Accidentes", secondary_y=False)
+            fig5.update_yaxes(title_text="Índice de gravedad", secondary_y=True)
+            st.plotly_chart(fig5, use_container_width=True)
+
+            peak_day = weekday.loc[weekday["accidentes"].idxmax()]
+            grave_day = weekday.loc[weekday["indice_gravedad"].idxmax()]
+            st.markdown(
+                f'<div class="insight-box">El día con más accidentes es <strong>{peak_day["dia_semana"]}</strong> '
+                f'con <strong>{fmt(peak_day["accidentes"])}</strong> casos. '
+                f'El mayor índice de gravedad aparece en <strong>{grave_day["dia_semana"]}</strong> '
+                f'con valor <strong>{grave_day["indice_gravedad"]:.3f}</strong>.</div>',
+                unsafe_allow_html=True,
+            )
 
 #TENDENCIA MENSUAL
 elif section == "Tendencia Mensual":
@@ -628,7 +680,7 @@ elif section == "Causas y Tipos":
 elif section == "Víctimas y Gravedad":
     st.markdown('<h1 style="font-size:1.8rem;color:#f0f2f6;margin-bottom:4px;">¿Dónde hay más víctimas heridas o fallecidas?</h1>', unsafe_allow_html=True)
 
-    tab1,tab2,tab3 = st.tabs(["Por Estado","Por Municipio","Análisis de Gravedad"])
+    tab1,tab2,tab3,tab4 = st.tabs(["Por Estado","Por Municipio","Análisis de Gravedad","Por Zona"])
 
     with tab1:
         state = d["state"].copy()
@@ -716,6 +768,58 @@ elif section == "Víctimas y Gravedad":
                         f'<div class="kpi-label">Solo Daños Materiales</div>'
                         f'<div class="kpi-sub">sin víctimas</div></div>', unsafe_allow_html=True)
         st.markdown('<div class="insight-box"><strong>Atropellamientos</strong> y <strong>caídas de pasajero</strong> concentran víctimas con alta gravedad. Los accidentes fatales, aunque representan solo el 1.3% del total, generan el índice de gravedad más alto (6.43 víctimas por accidente). La <strong>mayoría de accidentes (81.4%) son solo daños materiales</strong>.</div>', unsafe_allow_html=True)
+
+    with tab4:
+        zone = d["zone"].copy()
+        if zone.empty:
+            st.info("Ejecuta nuevamente el pipeline para generar accidents_by_zone.csv.")
+        else:
+            zone = zone.sort_values("accidentes", ascending=False)
+            col1, col2 = st.columns(2)
+            with col1:
+                fig5 = px.bar(zone, x="zona", y="accidentes", color="indice_gravedad",
+                              color_continuous_scale="RdYlGn_r",
+                              text="accidentes",
+                              hover_data={"victimas_heridas": True, "victimas_muertas": True})
+                fig5.update_traces(texttemplate="%{text:,}", textposition="outside")
+                fig5.update_layout(**base_layout(height=360, coloraxis_showscale=False,
+                                   title=dict(text="Accidentes por Zona", font_size=13, x=0)))
+                st.plotly_chart(fig5, use_container_width=True)
+            with col2:
+                fig6 = go.Figure()
+                fig6.add_trace(go.Bar(x=zone["zona"], y=zone["victimas_heridas"],
+                                      name="Heridos", marker_color="#ffd166", opacity=.88))
+                fig6.add_trace(go.Bar(x=zone["zona"], y=zone["victimas_muertas"],
+                                      name="Fallecidos", marker_color="#ff4b4b", opacity=.88))
+                fig6.update_layout(**base_layout(height=360, barmode="group",
+                                   title=dict(text="Víctimas por Zona", font_size=13, x=0)))
+                st.plotly_chart(fig6, use_container_width=True)
+
+            zone_tbl = zone[["zona", "accidentes", "accidentes_con_heridos",
+                             "accidentes_con_muertos", "victimas_heridas",
+                             "victimas_muertas", "total_victimas",
+                             "indice_gravedad"]].copy()
+            zone_tbl.columns = ["Zona", "Accidentes", "Con Heridos", "Con Fallecidos",
+                                "Víctimas Heridas", "Víctimas Muertas",
+                                "Total Víctimas", "Índ. Gravedad"]
+            st.dataframe(zone_tbl.style
+                .background_gradient(subset=["Accidentes"], cmap="Blues")
+                .background_gradient(subset=["Índ. Gravedad"], cmap="RdYlGn_r")
+                .format({"Accidentes":"{:,.0f}", "Con Heridos":"{:,.0f}",
+                         "Con Fallecidos":"{:,.0f}", "Víctimas Heridas":"{:,.0f}",
+                         "Víctimas Muertas":"{:,.0f}", "Total Víctimas":"{:,.0f}",
+                         "Índ. Gravedad":"{:.3f}"}),
+                use_container_width=True, hide_index=True)
+
+            top_zone = zone.loc[zone["accidentes"].idxmax()]
+            severe_zone = zone.loc[zone["indice_gravedad"].idxmax()]
+            st.markdown(
+                f'<div class="insight-box">La zona con mayor volumen es <strong>{top_zone["zona"]}</strong> '
+                f'con <strong>{fmt(top_zone["accidentes"])}</strong> accidentes. '
+                f'La zona con mayor severidad relativa es <strong>{severe_zone["zona"]}</strong> '
+                f'con índice <strong>{severe_zone["indice_gravedad"]:.3f}</strong>.</div>',
+                unsafe_allow_html=True,
+            )
 
 #RAY VS PANDAS
 elif section == "Ray vs Pandas":

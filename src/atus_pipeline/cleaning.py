@@ -208,7 +208,9 @@ def make_summaries(cleaned):
             df, ["id_entidad", "entidad", "id_municipio", "municipio"]
         ),
         "accidents_by_hour": aggregate_dataframe(df, ["hora"]),
+        "accidents_by_weekday": aggregate_dataframe(df, ["dia_semana"]),
         "accidents_by_month": aggregate_dataframe(df, ["año", "mes"]),
+        "accidents_by_zone": aggregate_dataframe(df, ["zona"]),
         "accidents_by_cause": aggregate_dataframe(df, ["causa_accidente"]),
         "accidents_by_type": aggregate_dataframe(df, ["tipo_accidente"]),
         "accidents_by_classification": aggregate_dataframe(

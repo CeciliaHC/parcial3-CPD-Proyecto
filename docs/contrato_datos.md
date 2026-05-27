@@ -30,7 +30,9 @@ Todos quedan en `data/processed/summary/`.
 - `accidents_by_state.csv`: ranking por entidad federativa.
 - `accidents_by_municipality.csv`: ranking municipal.
 - `accidents_by_hour.csv`: distribucion por hora.
+- `accidents_by_weekday.csv`: distribucion por dia de la semana.
 - `accidents_by_month.csv`: tendencia mensual por año.
+- `accidents_by_zone.csv`: distribucion por zona urbana, suburbana o no especificada.
 - `accidents_by_cause.csv`: ranking de causas.
 - `accidents_by_type.csv`: ranking por tipo de accidente.
 - `accidents_by_classification.csv`: fatal, no fatal, solo danos, etc.

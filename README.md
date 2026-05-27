@@ -194,7 +194,9 @@ Resumenes disponibles:
 - `accidents_by_state.csv`
 - `accidents_by_municipality.csv`
 - `accidents_by_hour.csv`
+- `accidents_by_weekday.csv`
 - `accidents_by_month.csv`
+- `accidents_by_zone.csv`
 - `accidents_by_cause.csv`
 - `accidents_by_type.csv`
 - `accidents_by_classification.csv`

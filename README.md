@@ -8,11 +8,13 @@ Esta primera etapa cubre la recoleccion local de datos, limpieza, normalizacion,
 
 - Python 3.11 o 3.12
 - Pandas
+- NumPy
 - Ray Core
 - Ray Data
 - PyArrow
 - Docker
 - Streamlit
+- Plotly
 
 Ray en Windows no cuenta con wheels para todas las versiones de Python. Para este proyecto se recomienda crear el entorno con Python 3.11 o 3.12. Python 3.14 no es compatible con la version de Ray definida en `requirements.txt`.
 
@@ -65,9 +67,10 @@ Crear y activar el entorno virtual con Python 3.11:
 ```powershell
 py -3.11 -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-python -m pip install -e .
+.\.venv\Scripts\python.exe --version
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pip install -e .
 ```
 
 Para Python 3.12, usar:
@@ -75,6 +78,21 @@ Para Python 3.12, usar:
 ```powershell
 py -3.12 -m venv .venv
 ```
+
+Si al instalar aparece Python 3.14, significa que se esta usando el Python global y no el entorno virtual compatible. En ese caso, recrea el entorno con Python 3.11 o 3.12:
+
+```powershell
+# Si la terminal muestra (.venv), primero ejecuta: deactivate
+if (Test-Path .venv) { Remove-Item -Recurse -Force .venv }
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+.\.venv\Scripts\python.exe --version
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pip install -e .
+```
+
+El comando `.\.venv\Scripts\python.exe --version` debe mostrar Python 3.11.x o 3.12.x. Si `py` no esta disponible, instala Python 3.11 o 3.12 desde python.org o crea el entorno usando la ruta completa del `python.exe` compatible.
 
 ## Ejecucion rapida
 
@@ -194,12 +212,24 @@ from atus_pipeline.ray_dataset import load_clean_dataset
 ds = load_clean_dataset("data/processed")
 ```
 ## Ejecucion del dashboard Streamlit
-Ejecuta los siguientes comandos desde la terminal:
+
+El dashboard lee los resumenes generados por el pipeline en `data/processed/summary/`. Antes de abrirlo, ejecuta el pipeline al menos una vez para que existan los archivos CSV de salida.
+
+Las dependencias del dashboard estan incluidas en `requirements.txt`, junto con las del pipeline. Con el entorno virtual activo, instala o actualiza las dependencias del proyecto:
 
 ```powershell
-pip install streamlit plotly pandas
-streamlit run dashboard.py
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pip install -e .
 ```
+
+Despues ejecuta Streamlit desde el mismo entorno virtual:
+
+```powershell
+.\.venv\Scripts\python.exe -m streamlit run dashboard.py
+```
+
+Usar `.\.venv\Scripts\python.exe -m streamlit` ayuda a que Windows ejecute la version de Streamlit instalada dentro del entorno virtual del proyecto.
+
 ## Documentacion
 
 - [Arquitectura](docs/arquitectura.md)

@@ -1,6 +1,8 @@
 # Ray en Windows requiere usar una version compatible de Python.
 # Recomendado para este proyecto: Python 3.11 o 3.12.
 pandas>=2.2
+numpy>=1.26
 ray[data]>=2.20
 pyarrow>=15.0
 streamlit>=1.35
+plotly>=5.22

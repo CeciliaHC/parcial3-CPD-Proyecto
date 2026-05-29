@@ -98,6 +98,16 @@ def base_layout(**kw):
 
 def fmt(n): return f"{n:,.0f}"
 
+def format_year_span(years):
+    years = sorted(int(year) for year in years if pd.notna(year))
+    if not years:
+        return "Sin años"
+    if len(years) == 1:
+        return str(years[0])
+    if years == list(range(years[0], years[-1] + 1)):
+        return f"{years[0]}-{years[-1]}"
+    return ", ".join(str(year) for year in years)
+
 #KPIs globales
 total_acc   = d["trend"]["accidentes"].sum()
 total_her   = d["trend"]["victimas_heridas"].sum()
@@ -105,6 +115,12 @@ total_mue   = d["trend"]["victimas_muertas"].sum()
 acc_heridos = d["trend"]["accidentes_con_heridos"].sum()
 acc_muertos = d["trend"]["accidentes_con_muertos"].sum()
 sev_avg     = round(d["trend"]["indice_gravedad"].mean(), 4)
+trend_years = sorted(d["trend"]["año"].dropna().astype(int).unique())
+years_label = format_year_span(trend_years)
+years_count = len(trend_years)
+cleaned_rows_total = int(d["metrics"]["rows_cleaned"].sum()) if not d["metrics"].empty else int(total_acc)
+municipality_count = d["muni"][["id_entidad", "id_municipio"]].drop_duplicates().shape[0]
+state_count = d["state"]["id_entidad"].nunique()
 
 #Sidebar
 with st.sidebar:
@@ -122,10 +138,10 @@ with st.sidebar:
         "Ray vs Pandas",
     ])
     st.markdown("---")
-    st.markdown(f"**Años:** 1999, 2010, 2022-2024")
-    st.markdown(f"**Registros:** 1,892,726")
-    st.markdown(f"**Municipios:** 1,984")
-    st.markdown(f"**Estados:** 32")
+    st.markdown(f"**Años:** {years_label}")
+    st.markdown(f"**Registros:** {fmt(cleaned_rows_total)}")
+    st.markdown(f"**Municipios:** {fmt(municipality_count)}")
+    st.markdown(f"**Estados:** {fmt(state_count)}")
 
 #RESUMEN GENERAL
 if section == "Resumen General":
@@ -134,7 +150,7 @@ if section == "Resumen General":
 
     c1,c2,c3,c4,c5 = st.columns(5)
     cards = [
-        (c1,"info",fmt(total_acc),"Total Accidentes","5 años analizados"),
+        (c1,"info",fmt(total_acc),"Total Accidentes",f"{years_count} años analizados"),
         (c2,"warning",fmt(acc_heridos),"Con Heridos",f"{acc_heridos/total_acc*100:.1f}% del total"),
         (c3,"danger",fmt(acc_muertos),"Con Fallecidos",f"{acc_muertos/total_acc*100:.1f}% del total"),
         (c4,"success",fmt(total_her),"Víctimas Heridas",f"en {fmt(acc_heridos)} accidentes"),
@@ -163,7 +179,25 @@ if section == "Resumen General":
     fig.update_yaxes(gridcolor="#1e2535")
     st.plotly_chart(fig, use_container_width=True)
 
-    st.markdown('<div class="insight-box"><strong>Insight:</strong> El número de accidentes creció de 285,494 en 1999 a 427,267 en 2010 (+50%), pero descendió en 2022-2024. El índice de gravedad muestra una <strong>mejora consistente</strong>: de 0.46 a 0.29, indicando que los accidentes recientes son menos letales.</div>', unsafe_allow_html=True)
+    first_year = trend.iloc[0]
+    last_year = trend.iloc[-1]
+    peak_year = trend.loc[trend["accidentes"].idxmax()]
+    accident_delta = (
+        (last_year["accidentes"] - first_year["accidentes"])
+        / first_year["accidentes"] * 100
+    )
+    severity_delta = last_year["indice_gravedad"] - first_year["indice_gravedad"]
+    severity_word = "bajó" if severity_delta < 0 else "subió"
+    st.markdown(
+        f'<div class="insight-box"><strong>Insight:</strong> El periodo disponible va de '
+        f'<strong>{int(first_year["año"])}</strong> a <strong>{int(last_year["año"])}</strong>. '
+        f'El mayor volumen se observa en <strong>{int(peak_year["año"])}</strong> con '
+        f'<strong>{fmt(peak_year["accidentes"])}</strong> accidentes. '
+        f'Entre el primer y último año, los accidentes cambiaron <strong>{accident_delta:+.1f}%</strong> '
+        f'y el índice de gravedad {severity_word} de <strong>{first_year["indice_gravedad"]:.3f}</strong> '
+        f'a <strong>{last_year["indice_gravedad"]:.3f}</strong>.</div>',
+        unsafe_allow_html=True,
+    )
 
     st.markdown('<div class="section-title">Clasificación de Accidentes</div>', unsafe_allow_html=True)
     clf = d["classif"].copy()
@@ -231,7 +265,17 @@ elif section == "Análisis por Estado":
             st.markdown(f'<div class="kpi-value">{fmt(avg_acc)}</div>'
                         f'<div class="kpi-label">Promedio por estado</div>'
                         f'<div class="kpi-sub">mediana: {fmt(state["accidentes"].median())}</div></div>', unsafe_allow_html=True)
-        st.markdown('<div class="insight-box"><strong>Nuevo León</strong> lidera con 354,631 accidentes (casi 3× el promedio nacional de ~57,500), seguido por <strong>Chihuahua</strong> y <strong>Jalisco</strong>. Estos 3 estados concentran el <strong>33%</strong> del total nacional.</div>', unsafe_allow_html=True)
+        top3 = state.sort_values("accidentes", ascending=False).head(3)
+        top_state = top3.iloc[0]
+        top3_pct = top3["accidentes"].sum() / state["accidentes"].sum() * 100
+        followers = " y ".join(top3["entidad"].iloc[1:].tolist())
+        st.markdown(
+            f'<div class="insight-box"><strong>{top_state["entidad"]}</strong> lidera con '
+            f'<strong>{fmt(top_state["accidentes"])}</strong> accidentes. Le siguen '
+            f'<strong>{followers}</strong>. Estos 3 estados concentran el '
+            f'<strong>{top3_pct:.1f}%</strong> del total nacional del periodo analizado.</div>',
+            unsafe_allow_html=True,
+        )
 
     with tab2:
         st.markdown('<div class="section-title">Índice de Gravedad por Estado</div>', unsafe_allow_html=True)
@@ -514,7 +558,7 @@ elif section == "Tendencia Mensual":
         metric = st.selectbox("Métrica:", ["accidentes","victimas_heridas","victimas_muertas","indice_gravedad"])
         metric_labels = {"accidentes":"Accidentes","victimas_heridas":"Víctimas Heridas",
                          "victimas_muertas":"Víctimas Muertas","indice_gravedad":"Índice de Gravedad"}
-        yr_colors = {"1999":"#4b8fff","2010":"#ffd166","2022":"#06d6a0","2023":"#f97316","2024":"#a78bfa"}
+        yr_colors = {str(yr): COLORS[i % len(COLORS)] for i, yr in enumerate(years)}
         fig = go.Figure()
         for yr in years:
             sub = month[month["año"]==yr].sort_values("mes")
@@ -674,7 +718,17 @@ elif section == "Causas y Tipos":
                            xaxis_title="Volumen de accidentes",yaxis_title="Índice de gravedad",
                            title=dict(text="Volumen vs Gravedad por Tipo (tamaño = fallecidos)",font_size=12,x=0)))
         st.plotly_chart(fig5, use_container_width=True)
-        st.markdown('<div class="insight-box"><strong>Colisión con vehículo automotor</strong> domina en volumen (1.18M) pero tiene baja gravedad (0.20). En contraste, <strong>Atropellamiento</strong> y <strong>Volcadura</strong> combinan alto volumen con alta letalidad — son los tipos más críticos para políticas de prevención.</div>', unsafe_allow_html=True)
+        typ_cross = d["type"].copy()
+        top_volume_type = typ_cross.sort_values("accidentes", ascending=False).iloc[0]
+        top_severity_types = typ_cross.sort_values("indice_gravedad", ascending=False).head(2)
+        severity_names = " y ".join(top_severity_types["tipo_accidente"].tolist())
+        st.markdown(
+            f'<div class="insight-box"><strong>{top_volume_type["tipo_accidente"]}</strong> domina en volumen '
+            f'con <strong>{fmt(top_volume_type["accidentes"])}</strong> accidentes e índice de gravedad '
+            f'<strong>{top_volume_type["indice_gravedad"]:.2f}</strong>. En contraste, '
+            f'<strong>{severity_names}</strong> presentan la mayor severidad relativa del periodo analizado.</div>',
+            unsafe_allow_html=True,
+        )
 
 #VÍCTIMAS Y GRAVEDAD
 elif section == "Víctimas y Gravedad":
@@ -767,7 +821,18 @@ elif section == "Víctimas y Gravedad":
             st.markdown(f'<div class="kpi-value">{fmt(dam["accidentes"])}</div>'
                         f'<div class="kpi-label">Solo Daños Materiales</div>'
                         f'<div class="kpi-sub">sin víctimas</div></div>', unsafe_allow_html=True)
-        st.markdown('<div class="insight-box"><strong>Atropellamientos</strong> y <strong>caídas de pasajero</strong> concentran víctimas con alta gravedad. Los accidentes fatales, aunque representan solo el 1.3% del total, generan el índice de gravedad más alto (6.43 víctimas por accidente). La <strong>mayoría de accidentes (81.4%) son solo daños materiales</strong>.</div>', unsafe_allow_html=True)
+        fatal_pct = for_["accidentes"] / clf["accidentes"].sum() * 100
+        damage_pct = dam["accidentes"] / clf["accidentes"].sum() * 100
+        most_severe_type = d["type"].sort_values("indice_gravedad", ascending=False).iloc[0]
+        st.markdown(
+            f'<div class="insight-box"><strong>{most_severe_type["tipo_accidente"]}</strong> presenta el '
+            f'índice de gravedad más alto por tipo de accidente '
+            f'(<strong>{most_severe_type["indice_gravedad"]:.2f}</strong>). '
+            f'Los accidentes fatales representan el <strong>{fatal_pct:.1f}%</strong> del total y generan '
+            f'el mayor impacto en víctimas mortales. Los accidentes de solo daños representan el '
+            f'<strong>{damage_pct:.1f}%</strong> del total.</div>',
+            unsafe_allow_html=True,
+        )
 
     with tab4:
         zone = d["zone"].copy()
@@ -829,17 +894,17 @@ elif section == "Ray vs Pandas":
     quality = d["quality"].copy()
 
     # ── Datos reales del pipeline ─────────────────────────────────────────────
-    ray_total_s   = metrics["total_pipeline_seconds"].iloc[0]     # 334.8s
-    total_rows    = metrics["rows_read"].iloc[0]                   # 10,730,849
-    ray_rows_s    = metrics["rows_per_second"].sum()               # total throughput
-    cleaned_rows  = metrics["rows_cleaned"].sum()                  # 1,892,726
-    n_workers     = len(metrics)                                   # 3
+    ray_total_s   = metrics["total_pipeline_seconds"].iloc[0]
+    total_rows    = metrics["rows_read"].iloc[0]
+    ray_rows_s    = metrics["rows_per_second"].sum()
+    cleaned_rows  = metrics["rows_cleaned"].sum()
+    n_workers     = len(metrics)
 
     # Pandas secuencial = suma de elapsed de cada nodo (trabajo que Ray paralelizó)
     # Cada worker procesó su partición: si fuera 1 nodo haría la suma total
-    pandas_est_s  = metrics["elapsed_seconds"].sum()              # 864.8s (suma de los 3 workers)
-    pandas_io_est = total_rows / 600                               # estimado I/O puro ~17,884s
-    speedup_real  = pandas_est_s / ray_total_s                    # x2.58 (real medido)
+    pandas_est_s  = metrics["elapsed_seconds"].sum()
+    pandas_io_est = total_rows / 600
+    speedup_real  = pandas_est_s / ray_total_s
     speedup_io    = n_workers * (metrics["elapsed_seconds"].max() / ray_total_s)  # teórico lineal
 
     st.markdown('<div class="section-title">Métricas del Pipeline Ray</div>', unsafe_allow_html=True)
@@ -972,11 +1037,11 @@ elif section == "Ray vs Pandas":
     st.markdown(f"""
     <div class="insight-box">
     <strong>Conclusión del benchmark Ray vs Pandas:</strong><br><br>
-    Ray procesó <strong>10,730,849 filas</strong> en <strong>{ray_total_s:.0f} segundos</strong> (~5.6 min) usando 3 nodos en paralelo.<br>
-    La misma carga en un solo nodo secuencial tomaría <strong>{pandas_est_s:.0f}s</strong> (~14.4 min), que es la suma real del trabajo de cada worker.<br>
+    Ray procesó <strong>{fmt(total_rows)} filas fuente</strong> en <strong>{ray_total_s:.0f} segundos</strong> (~{ray_total_s/60:.1f} min) usando {n_workers} nodos en paralelo.<br>
+    La misma carga en un solo nodo secuencial tomaría <strong>{pandas_est_s:.0f}s</strong> (~{pandas_est_s/60:.1f} min), que es la suma real del trabajo de cada worker.<br>
     El <strong>speedup real es ×{speedup_real:.2f}</strong> (teórico lineal máximo = ×{n_workers}). La eficiencia paralela es del <strong>{speedup_real/n_workers*100:.0f}%</strong>.<br>
     El nodo W3 (apellidos N-Z) procesó más filas ({metrics['rows_cleaned'].iloc[2]:,}) y más tiempo ({metrics['elapsed_seconds'].iloc[2]:.1f}s), evidenciando <strong>desbalance de carga</strong> por distribución alfabética desigual.<br>
-    Ray permite escalar horizontalmente: con 6 nodos el speedup teórico sería ×5-6, reduciendo el tiempo a ~<strong>2-3 minutos</strong>.
+    Ray permite escalar horizontalmente, aunque el beneficio real depende del balance de carga, el I/O disponible y el tamaño de las particiones.
     </div>""", unsafe_allow_html=True)
 
 #Footer

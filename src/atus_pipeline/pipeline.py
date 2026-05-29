@@ -88,6 +88,7 @@ def _process_shard(
             file_path,
             dtype=str,
             encoding="utf-8",
+            index_col=False,
             chunksize=chunksize,
             nrows=max_rows_per_file,
             low_memory=False,
